@@ -11,7 +11,7 @@
  const char MS2[] = "\r\nby Eugene Rockey Copyright 2018, All Rights Reserved";
  const char MS3[] = "\r\nMenu: (L)CD, (A)CD, (E)EPROM\r\n";
  const char MS4[] = "\r\nReady: ";
- const char MS5[] = "\r\nInvalid Command Try Again..."; //ghjjghighu
+ const char MS5[] = "\r\nInvalid Command Try Again..."; 
  const char MS6[] = "Volts\r";
  const char MS7[] = "F\r";
  

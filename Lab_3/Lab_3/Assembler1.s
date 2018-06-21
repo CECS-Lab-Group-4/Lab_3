@@ -176,27 +176,27 @@ UART_Put:
 
 .global ADC_Get
 ADC_Get:
-		ldi		r16,0xC7			//student comment here
-		sts		ADCSRA,r16			//student comment here
-A2V1:	lds		r16,ADCSRA			//student comment here
-		sbrc	r16,ADSC			//student comment here
-		rjmp 	A2V1				//student comment here
-		lds		r16,ADCL			//student comment here
-		sts		LADC,r16			//student comment here
-		lds		r16,ADCH			//student comment here
-		sts		HADC,r16			//student comment here
-		ret							//student comment here
+		ldi		r16,0xC7			    //Store 0xC7 in r16
+		sts		ADCSRA,r16			//Write back
+A2V1:	lds		r16,ADCSRA			//Store ADCSRA in r16
+		sbrc	r16,ADSC			        //Skip if Bit in Register is Cleared
+		rjmp 	A2V1				    //Unconditional branch
+		lds		r16,ADCL			    //Store ADCL in r16
+		sts		LADC,r16			    //Write back
+		lds		r16,ADCH			    //Store ADCH in r16
+		sts		HADC,r16			    //write back
+		ret							//Return from subroutine
 
 .global EEPROM_Write
 EEPROM_Write:      
 		sbic    EECR,EEPE
-		rjmp    EEPROM_Write		; Wait for completion of previous write
-		ldi		r18,0x00			; Set up address (r18:r17) in address register
+		rjmp    EEPROM_Write		    ; Wait for completion of previous write
+		ldi		r18,0x00			    ; Set up address (r18:r17) in address register
 		ldi		r17,0x05 
 		ldi		r16,'F'				; Set up data in r16    
 		out     EEARH, r18      
 		out     EEARL, r17			      
-		out     EEDR,r16			; Write data (r16) to Data Register  
+		out     EEDR,r16			    ; Write data (r16) to Data Register  
 		sbi     EECR,EEMPE			; Write logical one to EEMPE
 		sbi     EECR,EEPE			; Start eeprom write by setting EEPE
 		ret 
@@ -204,14 +204,14 @@ EEPROM_Write:
 .global EEPROM_Read
 EEPROM_Read:					    
 		sbic    EECR,EEPE    
-		rjmp    EEPROM_Read		; Wait for completion of previous write
-		ldi		r18,0x00		; Set up address (r18:r17) in EEPROM address register
+		rjmp    EEPROM_Read		    ; Wait for completion of previous write
+		ldi		r18,0x00		        ; Set up address (r18:r17) in EEPROM address register
 		ldi		r17,0x05
 		ldi		r16,0x00   
 		out     EEARH, r18   
 		out     EEARL, r17		   
-		sbi     EECR,EERE		; Start eeprom read by writing EERE
-		in      r16,EEDR		; Read data from Data Register
+		sbi     EECR,EERE		   ; Start eeprom read by writing EERE
+		in      r16,EEDR		       ; Read data from Data Register
 		sts		ASCII,r16  
 		ret
 		//End Dhan
