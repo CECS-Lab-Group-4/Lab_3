@@ -51,7 +51,7 @@
 .global Mega328P_Init
 Mega328P_Init:
 		ldi	r16,0x07		;PB0(R*W),PB1(RS),PB2(E) as fixed outputs
-		out	DDRB,r16		//student comment here
+		out	DDRB,r16		//student comment poop
 		ldi	r16,0			//student comment here
 		out	PORTB,r16		//student comment here
 		out	U2X0,r16		;initialize UART, 8bits, no parity, 1 stop, 9600
