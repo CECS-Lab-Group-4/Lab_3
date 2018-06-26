@@ -10,10 +10,12 @@
  #include <math.h>
  #include <avr/eeprom.h>
  #include <util/delay.h>
+ #include <avr/interrupt.h>
+ #include <avr/io.h>
  
  const char MS1[] = "\r\nECE-412 ATMega328P Tiny OS";
  const char MS2[] = "\r\nby Eugene Rockey Copyright 2018, All Rights Reserved";
- const char MS3[] = "\r\nMenu: (L)CD, (A)CD, (E)EPROM\r\n";
+ const char MS3[] = "\r\nMenu: (L)CD, (A)CD, (E)EPROM (C)hange BAUD\r\n";
  const char MS4[] = "\r\nReady: ";
  const char MS5[] = "\r\nInvalid Command Try Again...";
  const char MS6[] = "Volts\r";
@@ -40,8 +42,16 @@ char LADC;						//shared ADC variable with Assembly
 unsigned char DATA_FOR_EEPROM;
 unsigned char REGISTER_FOR_EEPROM;
 
-char volts[5];					//string buffer for ADC output
+char temperature[5];					//string buffer for ADC output
 int Acc;						//Accumulator for ADC use
+
+volatile int USART_INPUT = 1;
+
+ISR(USART1_RX_vect){
+	
+	USART_INPUT = 0;
+	
+}
 
 void UART_Puts(const char *str)	//Display a string in the PC Terminal Program
 {
@@ -95,23 +105,29 @@ void LCD(void)						//Lite LCD demo
 	DATA = 0x0f;					//Student Comment Here
 	LCD_Write_Command();
 	
-	ASCII = '\0';
+	LCD_Puts("         We are Team: Barely Passing           ");
 	
-	while (ASCII == '\0'){
+	while( USART_INPUT == 1 ){
 		
-		LCD_Puts("               We are Team: Barely Passing               ");
-	
-		for (int i = 0; i < 31; i++){
-			DATA = 0x1c;
-			LCD_Write_Data();
+		for (int i = 0; i < 11; i++){
 			
-			_delay_ms(50);
+			DATA = 0x18;
 			
-			UART_Get();
+			LCD_Write_Command();
 			
 		}
 		
+		//UART_Get();
+		
+		DATA = 0x02;
+		
+		LCD_Write_Command();
+		
 	}
+	
+	USART_INPUT = 1;
+	
+	cli();
 	
 	/*
 	Re-engineer this subroutine to have the LCD endlessly scroll a marquee sign of 
@@ -121,46 +137,44 @@ void LCD(void)						//Lite LCD demo
 	*/
 }
 
-char Display_Fahrenheit(char* A2DValue){
+double Display_Fahrenheit(float A2DValue){
 	
-	float ADValue = (float)( (int)A2DValue[0x0] + (int)A2DValue[0x1] + A2DValue[0x2] + A2DValue[0x3] + A2DValue[0x4] );
+	const double B = 3950.0;
 	
-	const double B = 3950;
+	double r = 10000.0 * A2DValue / (1024.0 - A2DValue);
 	
-	double r = 10000.0 * ADValue / (1024.0 - ADValue);
-	
-	double T = B * 293.15 / (293.15 * log(r / 10000.0) + B );
+	double T = B * 298.15 / (298.15 * log(r / 10000.0) + B );
 	
 	T = T - 273.15;
 	
-	T = T * (9.0 / 5.0) + 32.0;
+	T = T * 9.0 / 5.0 + 32.0;
 	
-	char value_to_return = (char)T;
-	
-	return value_to_return;
+	return T;
 }
 
 void _ADC(void)					//Lite Demo of the Analog to Digital Converter
 {
-	volts[0x1]='.';
-	volts[0x3]=' ';
-	volts[0x4]= 0;
-	ADC_Get();
-	Acc = ( ( (int)HADC ) * 0x100 + (int)(LADC) ) * 0xA;
-	volts[0x0] = 48 + (Acc / 0x7FE);
-	Acc = Acc % 0x7FE;
-	volts[0x2] = ((Acc *0xA) / 0x7FE) + 48;
-	Acc = (Acc * 0xA) % 0x7FE;
-	if (Acc >= 0x3FF) volts[0x2]++;
-	if (volts[0x2] == 58)
-	{
-		volts[0x2] = 48;
-		volts[0x0]++;
-	}
-	UART_Puts(volts);
-	UART_Puts(MS6);
 	
-	UART_PutChar(Display_Fahrenheit(volts));
+	temperature[0x2]='.';
+	temperature[0x4]= 0;
+	ADC_Get();
+	Acc = ( ( (int)HADC ) * 0x100 + (int)(LADC) );
+	
+	double converted_temperature = Display_Fahrenheit(Acc);
+	
+	int ACC_No_decimal_place = (converted_temperature * 10);
+	int ACC_Regular_int = converted_temperature;
+	
+	temperature[0x0] = ACC_No_decimal_place / 100 + 48;
+	
+	temperature[0x1] = ACC_Regular_int % 10 + 48;
+	
+	temperature[0x3] = ACC_No_decimal_place % 10 + 48;
+	
+	//UART_Puts(volts);
+	//UART_Puts(MS6);
+	
+	UART_Puts(temperature);
 	UART_Puts(MS7);
 	
 	/*
@@ -200,9 +214,9 @@ void Write_To_New(void){
 	uint8_t EEPROM_Location;
 	uint8_t EEPROM_Data;
 	
-	EEPROM_Location = (uint8_t )Ask_For_Input("What EEPROM Location do you want to write to?");
+	EEPROM_Location = (uint8_t)Ask_For_Input("What EEPROM Location do you want to write to?\r\n");
 	
-	EEPROM_Data = (uint8_t)Ask_For_Input("What data do you want to write to?");
+	EEPROM_Data = (uint8_t)Ask_For_Input("What data do you want to write to?\r\n");
 	
 	eeprom_write_byte(&EEPROM_Location, EEPROM_Data);
 	
@@ -242,7 +256,12 @@ void EEPROM(void)
 
 void USART(void) {
 	
-	unsigned int ubrr = (int)Ask_For_Input("What BAUD Rate do you want to set? numbers only please!");
+	unsigned int ubrr = 1000 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 1000 place") );
+	ubrr += 100 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 100 place") );
+	ubrr += 10 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 10") );
+	ubrr += 1 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 1") );
+	
+	ubrr = ((16000000/16/ubrr) - 1);
 	
 	//Set BAUD Rate
 	UBRR0H = (unsigned char)(ubrr>>8);
@@ -271,6 +290,8 @@ void Command(void)					//command interpreter
 		break;
 		case 'E' | 'e': EEPROM();
 		break;
+		case 'C' | 'c' : USART();
+		break;
 		default:
 		UART_Puts(MS5);
 		HELP();
@@ -284,6 +305,8 @@ int main(void)
 {
 	Mega328P_Init();
 	
+	sei();
+		
 	Banner();
 	while (1)
 	{
