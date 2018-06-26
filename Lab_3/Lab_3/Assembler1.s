@@ -4,27 +4,26 @@
  // Author : Eugene Rockey
  // Copyright 2018, All Rights Reserved
 
-		;Begin here Will C.
 
 .section ".data"					//equivalent to DSEG
-.equ	DDRB,0x04					;equates DDRB to the address in SRAM that determines whether a B pin is an input or utput
-.equ	DDRD,0x0A					;equates DDRD to the address in SRAM that determines whether a D pin is an input or utput
-.equ	PORTB,0x05					;equates PORTB to the address in SRAM that determines what a B pin in outputting
-.equ	PORTD,0x0B					;equates PORTD to the address in SRAM that determines what a D pin in outputting
+.equ	DDRB,0x04					;Defines the Data Direction Register B in AVR memory
+.equ	DDRD,0x0A					;Defines the Data Direction Register D in AVR memory
+.equ	PORTB,0x05					;Defines the PORT B Register in AVR memory
+.equ	PORTD,0x0B					;Defines the PORT D Register in AVR memory
 .equ	U2X0,1						;doubles the transmittion speed for USART
-.equ	UBRR0L,0xC4					;equates UBRR0L to the address in SRAM that sets the low byte of the prescaler for the baud rate
-.equ	UBRR0H,0xC5					;equates UBRR0L to the address in SRAM that sets the high byte of the prescaler for the baud rate
-.equ	UCSR0A,0xC0					;equates UCSR0A to the address in SRAM for status register A
-.equ	UCSR0B,0xC1					;equates UCSR0B to the address in SRAM for status register B
-.equ	UCSR0C,0xC2					;equates UCSR0C to the address in SRAM for status register C
-.equ	UDR0,0xC6					//student comment here
-.equ	RXC0,0x07					//student comment here
-.equ	UDRE0,0x05					//student comment here
-.equ	ADCSRA,0x7A					;equates ADCSRA to the address in SRAM for ADC status on register A
-.equ	ADMUX,0x7C					;equates ADMUX to the address in SRAM for the ADC Multiplexer Selection Register
-.equ	ADCSRB,0x7B					;equates ADCSRB to the address in SRAM for ADC status on register B
-.equ	DIDR0,0x7E					;equates DIDR0 to the address in SRAM for Digital Input Disable Register 0
-.equ	DIDR1,0x7F					;equates DIDR1 to the address in SRAM for Digital Input Disable Register 1
+.equ	UBRR0L,0xC4					;Defines the UBRR0L in AVR Memory - will sets the low byte of the prescaler for the baud rate
+.equ	UBRR0H,0xC5					;Defines the UBRR0H in AVR Memory - will  sets the high byte of the prescaler for the baud rate
+.equ	UCSR0A,0xC0					;Defines status register A in AVR Memory
+.equ	UCSR0B,0xC1					;Defines status register B in AVR Memory
+.equ	UCSR0C,0xC2					;Defines status register C in AVR Memory
+.equ	UDR0,0xC6					;Defines UDR0 in AVR Memory 
+.equ	RXC0,0x07					;Defines RXC0 in AVR Memory - will be used as a flag that indicates if there are unread data present in the receive buffer
+.equ	UDRE0,0x05					;Defines UDRE0 in AVR Memory - a flag to see if the buffer is empty to see if it is ready to recieve new data
+.equ	ADCSRA,0x7A					;Defines ADC status on register A in AVR Memory
+.equ	ADMUX,0x7C					;Defines the ADC Multiplexer Selection Register in AVR Memory
+.equ	ADCSRB,0x7B					;Defines ADC status on register B in AVR Memory
+.equ	DIDR0,0x7E					;Defines the digital Input Disable Register 0 in AVR Memory
+.equ	DIDR1,0x7F					;Defines the digital Input Disable Register 1 in AVR Memory
 .equ	ADSC,6						//student comment here
 .equ	ADIF,4						//student comment here
 .equ	ADCL,0x78					//student comment here
@@ -38,14 +37,13 @@
 .equ	EEMPE,2						//student comment here
 .equ	EERIE,3						//student comment here
 
-.global HADC				//student comment here
-.global LADC				//student comment here
-.global ASCII				//student comment here
-.global DATA				//student comment here
+.global HADC				;defines HADC varaiable so it can be used with C code
+.global LADC				;defines LADC varaiable so it can be used with C code
+.global ASCII				;defines ASCII varaiable so it can be used with C code
+.global DATA				;defines DATA varaiable so it can be used with C code
 
-.set	temp,0				//student comment here
+.set	temp,0				;initializes temp to 0
 
-		;Begin here Nathan B.
 
 .section ".text"			//equivalent to CSEG 
 .global Mega328P_Init
@@ -77,30 +75,29 @@ Mega328P_Init:
 	
 .global LCD_Write_Command
 LCD_Write_Command:
-	call	UART_Off		//student comment here
+	call	UART_Off		;calls UART_Off subroutine to disable the receiver and transmitter
 	ldi		r16,0xFF		;PD0 - PD7 as outputs
-	out		DDRD,r16		//student comment here
-	lds		r16,DATA		//student comment here
-	out		PORTD,r16		//student comment here
-	ldi		r16,4			//student comment here
-	out		PORTB,r16		//student comment here
-	call	LCD_Delay		//student comment here
-	ldi		r16,0			//student comment here
-	out		PORTB,r16		//student comment here
-	call	LCD_Delay		//student comment here
-	call	UART_On			//student comment here
-	ret						//student comment here
+	out		DDRD,r16		;sets PD0 - PD7 pins to outputs
+	lds		r16,DATA		;loads DATA to register 16
+	out		PORTD,r16		;Sending DATA to outputs pins on PPORTD
+	ldi		r16,4			;loading 4 to register 16
+	out		PORTB,r16		;sending 00000(100) to Port B
+	call	LCD_Delay		;Calls LCD_Delay to Delay program by decrementing counters
+	ldi		r16,0			;resets register 16 to 0
+	out		PORTB,r16		;sets all PB pins to inputs
+	call	LCD_Delay		;Calls LCD_Delay to Delay program by decrementing counters
+	call	UART_On			;calls UART_On Subroutine to enable the receiver and transmitter
+	ret						;returns to line after LCD_Write_Command is 
 
-	;Begin here, Laith
 
 LCD_Delay:
-	ldi		r16,0xFA		//student comment here
-D0:	ldi		r17,0xFF		//student comment here
-D1:	dec		r17				//student comment here
-	brne	D1				//student comment here
-	dec		r16				//student comment here
-	brne	D0				//student comment here
-	ret						//student comment here
+	ldi		r16,0xFA		;load 0xFA to register 16 - sets up counter
+D0:	ldi		r17,0xFF		;load 0xFF to register 17 - sets up counter
+D1:	dec		r17				;decrements r17 counter
+	brne	D1				;keeps decrementing r17 to delay program until it equals 0
+	dec		r16				;decrements r16 counter to delay program
+	brne	D0				;restarts r17 counter and keeps decrementing r16 to delay program until it equals 0
+	ret						;returns to line after LCD_Delay is called
 
 .global LCD_Write_Data
 LCD_Write_Data:
@@ -120,63 +117,61 @@ LCD_Write_Data:
 
 .global LCD_Read_Data
 LCD_Read_Data:
-	call	UART_Off		//student comment here
-	ldi		r16,0x00		//student comment here
-	out		DDRD,r16		//student comment here
-	out		PORTB,4			//student comment here
-	in		r16,PORTD		//student comment here
-	sts		DATA,r16		//student comment here
-	out		PORTB,0			//student comment here
-	call	UART_On			//student comment here
-	ret						//student comment here
+	call	UART_Off		;Calls UART_Off to disable the UART receiver and transmitter
+	ldi		r16,0x00		;loads 0 to register 16
+	out		DDRD,r16		;sets all PD pins to inputs
+	out		PORTB,4			;sends logic 1 on PB2 pin and 0 on PB1-0 if they are in output mode
+	in		r16,PORTD		;loads data on PD input pins into register 16
+	sts		DATA,r16		;stores the data recieved from PD pins to DATA in SRAM
+	out		PORTB,0			;sends logic 0 on all PB pins 
+	call	UART_On			;Calls UART_Off to enables the UART receiver and transmitter
+	ret						;returns to the line after LCD_Read_Data is called
 
-	;Begin here Nathan H.
 
 .global UART_On
 UART_On:
-	ldi		r16,2				//student comment here
-	out		DDRD,r16			//student comment here
-	ldi		r16,24				//student comment here
-	sts		UCSR0B,r16			//student comment here
-	ret							//student comment here
+	ldi		r16,2				;loads 2 into register 16  
+	out		DDRD,r16			;sets the PD2 pin as an output and the other D pins as inputs
+	ldi		r16,24				;loads 24 into register 16
+	sts		UCSR0B,r16			;enables the receiver and transmitter
+	ret							;returns to the line after UART_On is called
 
 .global UART_Off
 UART_Off:
-	ldi	r16,0					//student comment here
-	sts UCSR0B,r16				//student comment here
-	ret							//student comment here
+	ldi	r16,0					;loads 0 to register 16
+	sts UCSR0B,r16				;disables receiver and transmitter
+	ret							;returns to the line after UART_Off is called
 
 .global UART_Clear
 UART_Clear:
-	lds		r16,UCSR0A			//student comment here
-	sbrs	r16,RXC0			//student comment here
-	ret							//student comment here
-	lds		r16,UDR0			//student comment here
-	rjmp	UART_Clear			//student comment here
+	lds		r16,UCSR0A			;loads data from UCSR0A to register 16
+	sbrs	r16,RXC0			;skips ret if there is unread data present in the receive buffer
+	ret							;returns if there is not unread data present in the receive buffer
+	lds		r16,UDR0			;reads data from UDR0
+	rjmp	UART_Clear			;returns to UART_Clear to see if there is any more unread data
 
 .global UART_Get
 UART_Get:
-	lds		r16,UCSR0A			//student comment here
-	sbrs	r16,RXC0			//student comment here
-	rjmp	UART_Get			//student comment here
-	lds		r16,UDR0			//student comment here
-	sts		ASCII,r16			//student comment here
-	ret							//student comment here
+	lds		r16,UCSR0A			;loads data from UCSR0A to register 16
+	sbrs	r16,RXC0			;skips the jump to UART_PUT if there is unread data present in the receive buffer
+	rjmp	UART_Get			;jumps to UART_Get if there is not unread data present in the receive buffer
+	lds		r16,UDR0			;read USART data register 0 data into register 16
+	sts		ASCII,r16			;store USART data register 0 data that is in register 16 to ASCII for later use
+	ret							;returns to the line after UART_Get was called
 
 .global UART_Put
 UART_Put:
-	lds		r17,UCSR0A			//student comment here
-	sbrs	r17,UDRE0			//student comment here
-	rjmp	UART_Put			//student comment here
-	lds		r16,ASCII			//student comment here
-	sts		UDR0,r16			//student comment here
-	ret							//student comment here
+	lds		r17,UCSR0A			;loads data from UCSR0A to register 17
+	sbrs	r17,UDRE0			;skips the jump to UART_PUT if the buffer is empty and the ready to recieve data
+	rjmp	UART_Put			;jumps to UART_PUT if the buffer is not empty and the ready to recieve data
+	lds		r16,ASCII			;loads ASCII data into register 16
+	sts		UDR0,r16			;loads ASCII value into USART DATA Register 0 for later  !wouldn't characters keep be overwritten!
+	ret							;returns to the line after UART_Put was called
 
-	;Begin here, Dhan
 
 .global ADC_Get
 ADC_Get:
-		ldi		r16,0xC7			//student comment here
+		ldi		r16,0xC7			; loads 11000111 into register 16
 		sts		ADCSRA,r16			//student comment here
 A2V1:	lds		r16,ADCSRA			//student comment here
 		sbrc	r16,ADSC			//student comment here
@@ -192,7 +187,8 @@ EEPROM_Write:
 		sbic    EECR,EEPE
 		rjmp    EEPROM_Write		; Wait for completion of previous write
 		ldi		r18,0x00			; Set up address (r18:r17) in address register
-		ldi		r17,0x05 
+		ldi		r17,
+		 
 		ldi		r16,'F'				; Set up data in r16    
 		out     EEARH, r18      
 		out     EEARL, r17			      
@@ -214,7 +210,6 @@ EEPROM_Read:
 		in      r16,EEDR		; Read data from Data Register
 		sts		ASCII,r16  
 		ret
-		//End Dhan
 
 		.end
 
