@@ -110,7 +110,7 @@ LCD_Write_Data:
 	lds		r16,DATA		//student comment here
 	out		PORTD,r16		//student comment here
 	ldi		r16,6			//student comment here
-	out		PORTB,r16		//student comment here
+	out		PORTB,r16		//student cment here
 	call	LCD_Delay		//student comment here
 	ldi		r16,0			//student comment here
 	out		PORTB,r16		//student comment here
