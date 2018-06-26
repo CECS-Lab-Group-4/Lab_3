@@ -7,24 +7,24 @@
 		;Begin here Will C.
 
 .section ".data"					//equivalent to DSEG
-.equ	DDRB,0x04					//student comment here
-.equ	DDRD,0x0A					//student comment here
-.equ	PORTB,0x05					//student comment here
-.equ	PORTD,0x0B					//student comment here
-.equ	U2X0,1						//student comment here
-.equ	UBRR0L,0xC4					//student comment here
-.equ	UBRR0H,0xC5					//student comment here
-.equ	UCSR0A,0xC0					//student comment here
-.equ	UCSR0B,0xC1					//student comment here
-.equ	UCSR0C,0xC2					//student comment here
+.equ	DDRB,0x04					;equates DDRB to the address in SRAM that determines whether a B pin is an input or utput
+.equ	DDRD,0x0A					;equates DDRD to the address in SRAM that determines whether a D pin is an input or utput
+.equ	PORTB,0x05					;equates PORTB to the address in SRAM that determines what a B pin in outputting
+.equ	PORTD,0x0B					;equates PORTD to the address in SRAM that determines what a D pin in outputting
+.equ	U2X0,1						;doubles the transmittion speed for USART
+.equ	UBRR0L,0xC4					;equates UBRR0L to the address in SRAM that sets the low byte of the prescaler for the baud rate
+.equ	UBRR0H,0xC5					;equates UBRR0L to the address in SRAM that sets the high byte of the prescaler for the baud rate
+.equ	UCSR0A,0xC0					;equates UCSR0A to the address in SRAM for status register A
+.equ	UCSR0B,0xC1					;equates UCSR0B to the address in SRAM for status register B
+.equ	UCSR0C,0xC2					;equates UCSR0C to the address in SRAM for status register C
 .equ	UDR0,0xC6					//student comment here
 .equ	RXC0,0x07					//student comment here
 .equ	UDRE0,0x05					//student comment here
-.equ	ADCSRA,0x7A					//student comment here
-.equ	ADMUX,0x7C					//student comment here
-.equ	ADCSRB,0x7B					//student comment here
-.equ	DIDR0,0x7E					//student comment here
-.equ	DIDR1,0x7F					//student comment here
+.equ	ADCSRA,0x7A					;equates ADCSRA to the address in SRAM for ADC status on register A
+.equ	ADMUX,0x7C					;equates ADMUX to the address in SRAM for the ADC Multiplexer Selection Register
+.equ	ADCSRB,0x7B					;equates ADCSRB to the address in SRAM for ADC status on register B
+.equ	DIDR0,0x7E					;equates DIDR0 to the address in SRAM for Digital Input Disable Register 0
+.equ	DIDR1,0x7F					;equates DIDR1 to the address in SRAM for Digital Input Disable Register 1
 .equ	ADSC,6						//student comment here
 .equ	ADIF,4						//student comment here
 .equ	ADCL,0x78					//student comment here
@@ -51,29 +51,29 @@
 .global Mega328P_Init
 Mega328P_Init:
 		ldi	r16,0x07		;PB0(R*W),PB1(RS),PB2(E) as fixed outputs
-		out	DDRB,r16		//student comment here
-		ldi	r16,0			//student comment here
-		out	PORTB,r16		//student comment here
+		out	DDRB,r16		;Sets the first 3 B pins are set to outputs
+		ldi	r16,0			;Resets register 16
+		out	PORTB,r16		;Sends 0 to port B pins
 		out	U2X0,r16		;initialize UART, 8bits, no parity, 1 stop, 9600
-		ldi	r17,0x0			//student comment here
-		ldi	r16,0x67		//student comment here
-		sts	UBRR0H,r17		//student comment here
-		sts	UBRR0L,r16		//student comment here
-		ldi	r16,24			//student comment here
-		sts	UCSR0B,r16		//student comment here
-		ldi	r16,6			//student comment here
-		sts	UCSR0C,r16		//student comment here
+		ldi	r17,0x0			;loads 0 to Register 17
+		ldi	r16,0x67		;loads 0x67 to Register 16
+		sts	UBRR0H,r17		;sets the high byte of the prescaler for the baud rate to 0 to give byte 00000000
+		sts	UBRR0L,r16		;sets the low byte of the prescaler for the baud rate to 103 to give byte 11001110 - 0000000011001110 (103) sets baud rate to 9600 bos
+		ldi	r16,24			;loads 24 to Register 16
+		sts	UCSR0B,r16		;enables reciever and transmitter and sets UCSZ02 to 0
+		ldi	r16,6			;loads 6 to Register 16
+		sts	UCSR0C,r16		;selects asynchronous operation mode and sets UCSZ01 and UCSZ00 to 0. This along with UCSZ02 gives '011' which sets the data frame size to 8-bits
 		ldi r16,0x87		//initialize ADC
-		sts	ADCSRA,r16		//student comment here
-		ldi r16,0x40		//student comment here
-		sts ADMUX,r16		//student comment here
-		ldi r16,0			//student comment here
-		sts ADCSRB,r16		//student comment here
-		ldi r16,0xFE		//student comment here
-		sts DIDR0,r16		//student comment here
-		ldi r16,0xFF		//student comment here
-		sts DIDR1,r16		//student comment here
-		ret					//student comment here
+		sts	ADCSRA,r16		;enables ADC on register A; sets the division factor between the system clock fequency and the input clock to the ADC to 128
+		ldi r16,0x40		;loads 0x40 to Register 16
+		sts ADMUX,r16		;sets ADC0 as analog input to the ADC; selects right adjusted result; reserves the ADC voltage reference
+		ldi r16,0			;loads 0 to Register 16
+		sts ADCSRB,r16		;selects free running mode for tigger source for ADC
+		ldi r16,0xFE		;loads 0xFE to Register 16
+		sts DIDR0,r16		;disables pins 1-7 on Register 0
+		ldi r16,0xFF		;loads 0xFF to Register 16
+		sts DIDR1,r16		;disables pins 0 and 1 on Register 1
+		ret					;returns to the line after Mega328P_Init is called
 	
 .global LCD_Write_Command
 LCD_Write_Command:
