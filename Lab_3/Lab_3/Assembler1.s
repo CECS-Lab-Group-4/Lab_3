@@ -51,7 +51,7 @@ Mega328P_Init:
 		ldi	r16,0x07		;PB0(R*W),PB1(RS),PB2(E) as fixed outputs
 		out	DDRB,r16		;Sets the first 3 B pins are set to outputs
 		ldi	r16,0			;Resets register 16
-		out	PORTB,r16		;Sends 0 to port B pins
+		out	PORTB,r16		;Sends 0 to port B pins - tells the LCD to not read
 		out	U2X0,r16		;initialize UART, 8bits, no parity, 1 stop, 9600
 		ldi	r17,0x0			;loads 0 to Register 17
 		ldi	r16,0x67		;loads 0x67 to Register 16
@@ -81,10 +81,10 @@ LCD_Write_Command:
 	lds		r16,DATA		;loads DATA to register 16
 	out		PORTD,r16		;Sending DATA to outputs pins on PPORTD
 	ldi		r16,4			;loading 4 to register 16
-	out		PORTB,r16		;sending 00000(100) to Port B
+	out		PORTB,r16		;sending 00000(100) to Port B - tells LCD to read from the D pins
 	call	LCD_Delay		;Calls LCD_Delay to Delay program by decrementing counters
 	ldi		r16,0			;resets register 16 to 0
-	out		PORTB,r16		;sets all PB pins to inputs
+	out		PORTB,r16		;sets all PB pins to logic level low - tell sLCD to not read
 	call	LCD_Delay		;Calls LCD_Delay to Delay program by decrementing counters
 	call	UART_On			;calls UART_On Subroutine to enable the receiver and transmitter
 	ret						;returns to line after LCD_Write_Command is 
@@ -107,10 +107,10 @@ LCD_Write_Data:
 	lds		r16,DATA		;loads DATA to register 16
 	out		PORTD,r16		;sends DATA to PD pins
 	ldi		r16,6			;load 6 to register 16
-	out		PORTB,r16		;sends 00000(110) to PB pins
+	out		PORTB,r16		;sends 00000(110) to PB pins - tells the LCD to read from D pins
 	call	LCD_Delay		;calls LCD_Delay to felay the program by decrementing counters
 	ldi		r16,0			;load 0 to register 16
-	out		PORTB,r16		;loads 00000(000) to PB pins
+	out		PORTB,r16		;loads 00000(000) to PB pins - tells LCD to not read from Dp pins
 	call	LCD_Delay		;;calls LCD_Delay to felay the program by decrementing counters
 	call	UART_On			//turn on the communication
 	ret						;returns to line after LCD_Write_Data is called
@@ -120,10 +120,10 @@ LCD_Read_Data:
 	call	UART_Off		;Calls UART_Off to disable the UART receiver and transmitter
 	ldi		r16,0x00		;loads 0 to register 16
 	out		DDRD,r16		;sets all PD pins to inputs
-	out		PORTB,4			;sends logic 1 on PB2 pin and 0 on PB1-0 if they are in output mode
+	out		PORTB,4			;sends logic 1 on PB2 pin and 0 on PB1-0 - tells LCD to Write to PortD
 	in		r16,PORTD		;loads data on PD input pins into register 16
 	sts		DATA,r16		;stores the data recieved from PD pins to DATA in SRAM
-	out		PORTB,0			;sends logic 0 on all PB pins 
+	out		PORTB,0			;sends logic 0 on all PB pins  - LCD from reading
 	call	UART_On			;Calls UART_Off to enables the UART receiver and transmitter
 	ret						;returns to the line after LCD_Read_Data is called
 
