@@ -102,18 +102,18 @@ D1:	dec		r17				;decrements r17 counter
 .global LCD_Write_Data
 LCD_Write_Data:
 	call	UART_Off		//turn off communication
-	ldi		r16,0xFF		//student comment here
-	out		DDRD,r16		//student comment here
-	lds		r16,DATA		//student comment here
-	out		PORTD,r16		//student comment here
-	ldi		r16,6			//student comment here
-	out		PORTB,r16		//student comment here
-	call	LCD_Delay		//student comment here
-	ldi		r16,0			//student comment here
-	out		PORTB,r16		//student comment here
-	call	LCD_Delay		//student comment here
+	ldi		r16,0xFF		;loads 0xFF to register 16
+	out		DDRD,r16		;sets all PD pins to outputs
+	lds		r16,DATA		;loads DATA to register 16
+	out		PORTD,r16		;sends DATA to PD pins
+	ldi		r16,6			;load 6 to register 16
+	out		PORTB,r16		;sends 00000(110) to PB pins
+	call	LCD_Delay		;calls LCD_Delay to felay the program by decrementing counters
+	ldi		r16,0			;load 0 to register 16
+	out		PORTB,r16		;loads 00000(000) to PB pins
+	call	LCD_Delay		;;calls LCD_Delay to felay the program by decrementing counters
 	call	UART_On			//turn on the communication
-	ret						//student comment here
+	ret						;returns to line after LCD_Write_Data is called
 
 .global LCD_Read_Data
 LCD_Read_Data:
@@ -165,22 +165,22 @@ UART_Put:
 	sbrs	r17,UDRE0			;skips the jump to UART_PUT if the buffer is empty and the ready to recieve data
 	rjmp	UART_Put			;jumps to UART_PUT if the buffer is not empty and the ready to recieve data
 	lds		r16,ASCII			;loads ASCII data into register 16
-	sts		UDR0,r16			;loads ASCII value into USART DATA Register 0 for later  !wouldn't characters keep be overwritten!
+	sts		UDR0,r16			;loads ASCII value into USART DATA Register 0 for later
 	ret							;returns to the line after UART_Put was called
 
 
 .global ADC_Get
 ADC_Get:
-		ldi		r16,0xC7			; loads 11000111 into register 16
-		sts		ADCSRA,r16			//student comment here
-A2V1:	lds		r16,ADCSRA			//student comment here
-		sbrc	r16,ADSC			//student comment here
-		rjmp 	A2V1				//student comment here
-		lds		r16,ADCL			//student comment here
-		sts		LADC,r16			//student comment here
-		lds		r16,ADCH			//student comment here
-		sts		HADC,r16			//student comment here
-		ret							//student comment here
+		ldi		r16,0xC7			;loads 11000111 into register 16
+		sts		ADCSRA,r16			;enables the ADC, starts the conversion, sets the division factor between the system clock frequency nd the input clock frequency to the ADC to 128 ADPS
+A2V1:	lds		r16,ADCSRA			;loads ADCSRA register into register 16
+		sbrc	r16,ADSC			;if the coversion is started, skip the jump to A2V1
+		rjmp 	A2V1				;if the conversion is not started, jump to A2V1
+		lds		r16,ADCL			;the low byte of result from the conversion is read from ADCL and written into r16
+		sts		LADC,r16			;loads low byte result to the LADC variable in SRAM
+		lds		r16,ADCH			;the high byte of result from the conversion is read from ADCH and written into r16
+		sts		HADC,r16			;loads high byte result to the HADC variable in SRAM
+		ret							;returns to the line after ADC_Get is called
 
 .global EEPROM_Write
 EEPROM_Write:      
