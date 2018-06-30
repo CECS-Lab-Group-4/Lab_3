@@ -7,11 +7,13 @@
  #define F_CPU 16000000
  
  //no includes, no ASF, no libraries
- #include <math.h>
- #include <avr/eeprom.h>
+ 
  #include <util/delay.h>
+ #include <avr/eeprom.h>
  #include <avr/interrupt.h>
  #include <avr/io.h>
+ #include <math.h>
+ #include <stdlib.h>
  
  const char MS1[] = "\r\nECE-412 ATMega328P Tiny OS";
  const char MS2[] = "\r\nby Eugene Rockey Copyright 2018, All Rights Reserved";
@@ -19,13 +21,15 @@
  const char MS4[] = "\r\nReady: ";
  const char MS5[] = "\r\nInvalid Command Try Again...";
  const char MS6[] = "Volts\r";
- const char MS7[] = "F\r";
+ const char MS7[] = " F\r";
 
 void LCD_Init(void);			//external Assembly functions
 void UART_Init(void);
 void UART_Clear(void);
 void UART_Get(void);
 void UART_Put(void);
+void UART_On(void);
+void UART_Off(void);
 void LCD_Write_Data(void);
 void LCD_Write_Command(void);
 void LCD_Read_Data(void);
@@ -39,19 +43,11 @@ unsigned char ASCII;			//shared I/O variable with Assembly
 unsigned char DATA;				//shared internal variable with Assembly
 char HADC;						//shared ADC variable with Assembly
 char LADC;						//shared ADC variable with Assembly
-unsigned char DATA_FOR_EEPROM;
-unsigned char REGISTER_FOR_EEPROM;
 
-char temperature[5];					//string buffer for ADC output
+char temperature[5];			//string buffer for ADC output
 int Acc;						//Accumulator for ADC use
+int isValInUARTBuff;
 
-volatile int USART_INPUT = 1;
-
-ISR(USART1_RX_vect){
-	
-	USART_INPUT = 0;
-	
-}
 
 void UART_Puts(const char *str)	//Display a string in the PC Terminal Program
 {
@@ -70,14 +66,26 @@ void UART_PutChar(const char str){
 	
 }
 
+void UART_Poll(void){
+	
+	if((UCSR0A & (1<<RXC0))){
+		
+		ASCII = UDR0;
+		
+	}
+	
+}
+
 void LCD_Puts(const char* str)	//Display a string on the LCD Module
 {
+	
 	while(*str){
 		
 		DATA = *str++;
 		
 		LCD_Write_Data();
 	}
+	
 }
 
 void Banner(void)				//Display Tiny OS Banner on Terminal
@@ -90,6 +98,16 @@ void Banner(void)				//Display Tiny OS Banner on Terminal
 void HELP(void)						//Display available Tiny OS Commands on Terminal
 {
 	UART_Puts(MS3);
+}
+
+//void initialize_button_pin(void){
+	//DDRB = 0x00;
+	//PORTB = 0x00;
+//}
+
+int isButtonPushed(){
+	if(!(PINB & (1<<PINB7))) return 1;
+	else return 0;
 }
 
 void LCD(void)						//Lite LCD demo
@@ -105,29 +123,30 @@ void LCD(void)						//Lite LCD demo
 	DATA = 0x0f;					//Student Comment Here
 	LCD_Write_Command();
 	
-	LCD_Puts("         We are Team: Barely Passing           ");
+	LCD_Puts("               We are Team: Barely Passing                "); 
 	
-	while( USART_INPUT == 1 ){
+	//initialize_button_pin();
+	
+	while(isButtonPushed() == 0){
 		
-		for (int i = 0; i < 11; i++){
+		int i = 0;
+		
+		while (isButtonPushed() == 0 && i < 27){
 			
-			DATA = 0x18;
+			DATA = 0x18;		//shift string by 1 to the right
 			
 			LCD_Write_Command();
 			
+			i++;
+			
 		}
 		
-		//UART_Get();
-		
-		DATA = 0x02;
+		DATA = 0x02;			//reset the string
 		
 		LCD_Write_Command();
-		
-	}
+	}		
 	
-	USART_INPUT = 1;
-	
-	cli();
+	//looping until a button is pressed
 	
 	/*
 	Re-engineer this subroutine to have the LCD endlessly scroll a marquee sign of 
@@ -135,47 +154,43 @@ void LCD(void)						//Lite LCD demo
 	the scrolling and return execution to the command line in Terminal. User must
 	always be able to return to command line.
 	*/
+	//
+	//UART_Off();
+	//UART_On();
 }
 
-double Display_Fahrenheit(float A2DValue){
-	
-	const double B = 3950.0;
-	
-	double r = 10000.0 * A2DValue / (1024.0 - A2DValue);
-	
-	double T = B * 298.15 / (298.15 * log(r / 10000.0) + B );
-	
-	T = T - 273.15;
-	
-	T = T * 9.0 / 5.0 + 32.0;
-	
-	return T;
-}
-
-void _ADC(void)					//Lite Demo of the Analog to Digital Converter
+void Diplay_Fahrenheit(void)					//Lite Demo of the Analog to Digital Converter
 {
+	double B = 3900.0;	//3950
 	
-	temperature[0x2]='.';
-	temperature[0x4]= 0;
 	ADC_Get();
-	Acc = ( ( (int)HADC ) * 0x100 + (int)(LADC) );
 	
-	double converted_temperature = Display_Fahrenheit(Acc);
+	//initialize_button_pin();
 	
-	int ACC_No_decimal_place = (converted_temperature * 10);
-	int ACC_Regular_int = converted_temperature;
+	while(isButtonPushed() == 0) {
+		
+		ADC_Get();
+		
+		Acc = ( ( (int)HADC ) * 0x100 + (int)(LADC) );
+		
+		double r = ( 10000.0 * (double)Acc ) / (1024.0 - (double)Acc); 
+		
+		double T = ( B * 298.15 ) / (298.15 * log(r / 10000.0 ) + B );
+		
+		T = T - 273.15;
+		
+		T = T * ( 9 / 5 ) + 32;
+		
+		dtostrf(T, 3, 1, &temperature);		
 	
-	temperature[0x0] = ACC_No_decimal_place / 100 + 48;
-	
-	temperature[0x1] = ACC_Regular_int % 10 + 48;
-	
-	temperature[0x3] = ACC_No_decimal_place % 10 + 48;
-	
-	//UART_Puts(volts);
-	//UART_Puts(MS6);
-	
-	UART_Puts(temperature);
-	UART_Puts(MS7);
+		UART_Puts(temperature);
+		UART_Puts(MS7);
+		
+		UART_Clear(); //resetting the UART terminal
+		
+		_delay_ms(100); //delaying so the cursor is not jumping
+		
+	}
 	
 	/*
 		Re-engineer this subroutine to display temperature in degrees Fahrenheit on the Terminal.
@@ -183,7 +198,6 @@ void _ADC(void)					//Lite Demo of the Analog to Digital Converter
 		varying resistance of a thermistor as it is heated and cooled. See the thermistor
 		equations in the lab 3 folder. User must always be able to return to command line.
 	*/
-	
 }
 
 void Write_To_Default(void){
@@ -211,18 +225,17 @@ char Ask_For_Input(char *msg){
 
 void Write_To_New(void){
 	
-	uint8_t EEPROM_Location;
-	uint8_t EEPROM_Data;
+	uint8_t EEPROM_Location, EEPROM_Data;
 	
-	EEPROM_Location = (uint8_t)Ask_For_Input("What EEPROM Location do you want to write to?\r\n");
+	EEPROM_Location = ((int)Ask_For_Input("What EEPROM Location do you want to write to?\r\n") - 48);
 	
-	EEPROM_Data = (uint8_t)Ask_For_Input("What data do you want to write to?\r\n");
-	
-	eeprom_write_byte(&EEPROM_Location, EEPROM_Data);
+	//EEPROM_Data = (Ask_For_Input("What data do you want to write to?\r\n"));
+	//
+	//eeprom_write_byte(&EEPROM_Location, EEPROM_Data);
 	
 	EEPROM_Data = eeprom_read_byte(&EEPROM_Location);
 	
-	ASCII = (unsigned char)EEPROM_Data;
+	ASCII = EEPROM_Data;
 	
 	UART_Put();
 }
@@ -239,7 +252,7 @@ void EEPROM(void)
 	may modify the EEPROM drivers as needed. User must be able to always return to command line.
 	*/
 	
-	UART_Puts("Would you like to write to the default location? y/n");
+	UART_Puts("Would you like to write to the default location? y/n\r\n");
 	
 	ASCII = '\0';
 	while (ASCII == '\0')
@@ -254,23 +267,125 @@ void EEPROM(void)
 	}
 }
 
+void Parity(void){
+	
+	ASCII = Ask_For_Input("Parity: (a)even? (b)odd?\r\n");
+	
+	switch(ASCII){
+		case 'a' | 'A':
+		
+		UCSR0C |= (0 << UPM00) | (1 << UPM01);
+		
+		break;
+		
+		case 'b' | 'B':
+		
+		UCSR0C |= (1 << UPM00) | (1 << UPM01);
+		
+		break;
+	}
+}
+
+void StopBit(void){
+	
+	ASCII = Ask_For_Input("StopBit: (a)1bit? (b)2bit?\r\n");
+		
+	switch(ASCII){
+		case 'a' | 'A':
+			
+		UCSR0C |= (0 << USBS0);
+			
+		break;
+			
+		case 'b' | 'B':
+			
+		UCSR0C |= (1 << USBS0);
+			
+		break;
+	}
+}
+
+void DataSize(void){
+	
+	ASCII = Ask_For_Input("DataSize: (a)5-bit? (b)6-bit (c)7-bit? (d)8-bit (e)9-bit\r\n");
+		
+	switch(ASCII){
+		case 'a' | 'A':
+			
+		UCSR0C |= (0<<UCSZ00)|(0<<UCSZ01)|(0<<UCSZ02);
+			
+		break;
+			
+		case 'b' | 'B':
+			
+		UCSR0C |= (1<<UCSZ00)|(0<<UCSZ01)|(0<<UCSZ02);
+		
+		break;
+		
+		case 'c'|'C':
+		
+		UCSR0C |= (0<<UCSZ00)|(1<<UCSZ01)|(0<<UCSZ02);
+			
+		break;
+		
+		case 'd' | 'D':
+		
+		UCSR0C |= (1<<UCSZ00)|(1<<UCSZ01)|(0<<UCSZ02);
+		
+		break;
+		
+		case 'e' | 'E':
+		
+		UCSR0C |= (1<<UCSZ00)|(1<<UCSZ01)|(1<<UCSZ02);
+		
+		break;
+	}
+
+}
+
 void USART(void) {
 	
-	unsigned int ubrr = 1000 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 1000 place") );
-	ubrr += 100 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 100 place") );
-	ubrr += 10 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 10") );
-	ubrr += 1 * ( (int)Ask_For_Input("What BAUD Rate do you want to set? 1") );
+	unsigned int ubrr;
 	
-	ubrr = ((16000000/16/ubrr) - 1);
+	ASCII = Ask_For_Input("Baud Rate: (a)9600 (b)4800 (c)2400\r\n");
+	
+	switch(ASCII){
+		
+		case 'a' | 'A':
+		
+		ubrr = 9600;
+		
+		break;
+		
+		case 'b' | 'B':
+		
+		ubrr = 4800;
+		
+		break;
+		
+		case 'c' | 'C':
+		
+		ubrr = 2400;
+		
+		break;
+		
+		default:
+		
+		ubrr = 9600;
+		
+	}
+	
+	ubrr = 16000000/16/ubrr-1;
 	
 	//Set BAUD Rate
 	UBRR0H = (unsigned char)(ubrr>>8);
 	UBRR0L = (unsigned char)ubrr;
 	//Enable Receiver and Transmitter
-	UCSR0B = (1<<RXEN0)|(1<<TXEN0);
+	UCSR0B |= (1<<RXEN0)|(1<<TXEN0);
 	
-	//Set frame format: 8data, 2stop bit
-	UCSR0C = (1<<USBS0)|(3<<UCSZ00);
+	Parity();
+	StopBit();
+	DataSize();
 	
 }
 
@@ -286,7 +401,7 @@ void Command(void)					//command interpreter
 	{
 		case 'L' | 'l': LCD();
 		break;
-		case 'A' | 'a': _ADC();
+		case 'A' | 'a': Diplay_Fahrenheit();
 		break;
 		case 'E' | 'e': EEPROM();
 		break;
@@ -304,8 +419,6 @@ void Command(void)					//command interpreter
 int main(void)
 {
 	Mega328P_Init();
-	
-	sei();
 		
 	Banner();
 	while (1)
