@@ -4,7 +4,6 @@
  // Author : Eugene Rockey
  // Copyright 2018, All Rights Reserved
 
-
 .section ".data"					//equivalent to DSEG
 .equ	DDRB,0x04					;Defines the Data Direction Register B in AVR memory
 .equ	DDRD,0x0A					;Defines the Data Direction Register D in AVR memory
@@ -43,7 +42,6 @@
 .global DATA				;defines DATA varaiable so it can be used with C code
 
 .set	temp,0				;initializes temp to 0
-
 
 .section ".text"			//equivalent to CSEG 
 .global Mega328P_Init
@@ -88,8 +86,7 @@ LCD_Write_Command:
 	call	LCD_Delay		;Calls LCD_Delay to Delay program by decrementing counters
 	call	UART_On			;calls UART_On Subroutine to enable the receiver and transmitter
 	ret						;returns to line after LCD_Write_Command is 
-
-
+  
 LCD_Delay:
 	ldi		r16,0xFA		;load 0xFA to register 16 - sets up counter
 D0:	ldi		r17,0xFF		;load 0xFF to register 17 - sets up counter
@@ -126,7 +123,6 @@ LCD_Read_Data:
 	out		PORTB,0			;sends logic 0 on all PB pins  - LCD from reading
 	call	UART_On			;Calls UART_Off to enables the UART receiver and transmitter
 	ret						;returns to the line after LCD_Read_Data is called
-
 
 .global UART_On
 UART_On:
@@ -167,8 +163,7 @@ UART_Put:
 	lds		r16,ASCII			;loads ASCII data into register 16
 	sts		UDR0,r16			;loads ASCII value into USART DATA Register 0 for later
 	ret							;returns to the line after UART_Put was called
-
-
+  
 .global ADC_Get
 ADC_Get:
 		ldi		r16,0xC7			;loads 11000111 into register 16
