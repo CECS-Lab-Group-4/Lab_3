@@ -1,10 +1,9 @@
+
  // Lab3P1.c
  //
  // Created: 1/30/2018 4:04:52 AM
  // Author : Eugene Rockey
  // Copyright 2018, All Rights Reserved
- 
- #define F_CPU 16000000
  
  //no includes, no ASF, no libraries
  
@@ -17,7 +16,7 @@
  
  const char MS1[] = "\r\nECE-412 ATMega328P Tiny OS";
  const char MS2[] = "\r\nby Eugene Rockey Copyright 2018, All Rights Reserved";
- const char MS3[] = "\r\nMenu: (L)CD, (A)CD, (E)EPROM (C)hange BAUD\r\n";
+ const char MS3[] = "\r\nMenu: (L)CD, (A)CD, (E)EPROM\r\n";
  const char MS4[] = "\r\nReady: ";
  const char MS5[] = "\r\nInvalid Command Try Again...";
  const char MS6[] = "Volts\r";
@@ -33,7 +32,6 @@ void UART_Off(void);
 void LCD_Write_Data(void);
 void LCD_Write_Command(void);
 void LCD_Read_Data(void);
-void LCD_Delay(void);
 void Mega328P_Init(void);
 void ADC_Get(void);
 void EEPROM_Read(void);
@@ -43,11 +41,9 @@ unsigned char ASCII;			//shared I/O variable with Assembly
 unsigned char DATA;				//shared internal variable with Assembly
 char HADC;						//shared ADC variable with Assembly
 char LADC;						//shared ADC variable with Assembly
-
 char temperature[5];			//string buffer for ADC output
 int Acc;						//Accumulator for ADC use
 int isValInUARTBuff;
-
 
 void UART_Puts(const char *str)	//Display a string in the PC Terminal Program
 {
@@ -80,13 +76,18 @@ void LCD_Puts(const char* str)	//Display a string on the LCD Module
 {
 	
 	while(*str){
-		
 		DATA = *str++;
-		
 		LCD_Write_Data();
 	}
 	
 }
+
+void LCD_PutChar(const char str){
+	DATA = str;
+	
+	LCD_Write_Data();
+}
+
 
 void Banner(void)				//Display Tiny OS Banner on Terminal
 {
@@ -112,17 +113,18 @@ int isButtonPushed(){
 
 void LCD(void)						//Lite LCD demo
 {
-	DATA = 0x34;					//Student Comment Here
+	DATA = 0x34;					//stores a command into data that allows the LCD to be edited by future input
 	LCD_Write_Command();
-	DATA = 0x08;					//Student Comment Here
+	DATA = 0x08;					//stores a command into data that turns the display and cursor of the LCD off
 	LCD_Write_Command();
-	DATA = 0x02;					//Student Comment Here
+	DATA = 0x02;					//stores a command into data that tells the LCD to return the cursor to the starting position
 	LCD_Write_Command();
-	DATA = 0x06;					//Student Comment Here
+	DATA = 0x06;					//stores a command into data that powers the enables entry mode on the LCD
 	LCD_Write_Command();
-	DATA = 0x0f;					//Student Comment Here
+	DATA = 0x0f;					//stores a command into data that powers the display and blinks it
 	LCD_Write_Command();
 	
+
 	LCD_Puts("               We are Team: Barely Passing                "); 
 	
 	//initialize_button_pin();
@@ -191,7 +193,6 @@ void Diplay_Fahrenheit(void)					//Lite Demo of the Analog to Digital Converter
 		_delay_ms(100); //delaying so the cursor is not jumping
 		
 	}
-	
 	/*
 		Re-engineer this subroutine to display temperature in degrees Fahrenheit on the Terminal.
 		The potentiometer simulates a thermistor, its varying resistance simulates the
@@ -243,7 +244,6 @@ void Write_To_New(void){
 void EEPROM(void)
 {
 	UART_Puts("\r\nEEPROM Write and Read.");
-	
 	/*
 	Re-engineer this subroutine so that a byte of data can be written to any address in EEPROM
 	during run-time via the command line and the same byte of data can be read back and verified after the power to
@@ -405,8 +405,6 @@ void Command(void)					//command interpreter
 		break;
 		case 'E' | 'e': EEPROM();
 		break;
-		case 'C' | 'c' : USART();
-		break;
 		default:
 		UART_Puts(MS5);
 		HELP();
@@ -419,12 +417,10 @@ void Command(void)					//command interpreter
 int main(void)
 {
 	Mega328P_Init();
-		
 	Banner();
 	while (1)
 	{
 		Command();				//infinite command loop
 	}
 }
-
 

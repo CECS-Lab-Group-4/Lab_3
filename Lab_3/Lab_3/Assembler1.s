@@ -14,7 +14,7 @@
 .equ	UBRR0H,0xC5					;Defines the UBRR0H in AVR Memory - will  sets the high byte of the prescaler for the baud rate
 .equ	UCSR0A,0xC0					;Defines status register A in AVR Memory
 .equ	UCSR0B,0xC1					;Defines status register B in AVR Memory
-.equ	UCSR0C,0xC2					;Defines status register C in AVR Memory
+.equ	UCSR0C,0xC2					;Defines status register C in AVR Memoryy
 .equ	UDR0,0xC6					;Defines UDR0 in AVR Memory 
 .equ	RXC0,0x07					;Defines RXC0 in AVR Memory - will be used as a flag that indicates if there are unread data present in the receive buffer
 .equ	UDRE0,0x05					;Defines UDRE0 in AVR Memory - a flag to see if the buffer is empty to see if it is ready to recieve new data
@@ -23,18 +23,18 @@
 .equ	ADCSRB,0x7B					;Defines ADC status on register B in AVR Memory
 .equ	DIDR0,0x7E					;Defines the digital Input Disable Register 0 in AVR Memory
 .equ	DIDR1,0x7F					;Defines the digital Input Disable Register 1 in AVR Memory
-.equ	ADSC,6						//student comment here
-.equ	ADIF,4						//student comment here
-.equ	ADCL,0x78					//student comment here
-.equ	ADCH,0x79					//student comment here
-.equ	EECR,0x1F					//student comment here
-.equ	EEDR,0x20					//student comment here
-.equ	EEARL,0x21					//student comment here
-.equ	EEARH,0x22					//student comment here
-.equ	EERE,0						//student comment here
-.equ	EEPE,1						//student comment here
-.equ	EEMPE,2						//student comment here
-.equ	EERIE,3						//student comment here
+.equ	ADSC,6						;Defines the ADC start conversion bit
+.equ	ADIF,4						;Defines the ADC interrupt flag bit
+.equ	ADCL,0x78					;Defines the low byte of the result of ADC in AVR Memory
+.equ	ADCH,0x79					;Defines the high byte of the result of ADC in AVR Memory
+.equ	EECR,0x1F					;Defines the EEPROM control register in AVR Memory
+.equ	EEDR,0x20					;Defines the EEPROM data register in AVR Memory
+.equ	EEARL,0x21					;Defines the low byte for the EEPROM address register in AVR Memory
+.equ	EEARH,0x22					;Defines the low byte for the EEPROM address register in AVR Memory
+.equ	EERE,0						;Defines EEPROM read enable bit
+.equ	EEPE,1						;Defines EEPROM write enable bit
+.equ	EEMPE,2						;Defines EEPROM Master Write Enable bit
+.equ	EERIE,3						;Defines EEPROM ready interrupt enable bit
 
 .global HADC				;defines HADC varaiable so it can be used with C code
 .global LADC				;defines LADC varaiable so it can be used with C code
