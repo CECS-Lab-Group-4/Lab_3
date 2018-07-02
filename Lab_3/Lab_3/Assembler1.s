@@ -15,7 +15,7 @@
 .equ	UBRR0H,0xC5					;Defines the UBRR0H in AVR Memory - will  sets the high byte of the prescaler for the baud rate
 .equ	UCSR0A,0xC0					;Defines status register A in AVR Memory
 .equ	UCSR0B,0xC1					;Defines status register B in AVR Memory
-.equ	UCSR0C,0xC2					;Defines status register C in AVR Memory
+.equ	UCSR0C,0xC2					;Defines status register C in AVR Memoryy
 .equ	UDR0,0xC6					;Defines UDR0 in AVR Memory 
 .equ	RXC0,0x07					;Defines RXC0 in AVR Memory - will be used as a flag that indicates if there are unread data present in the receive buffer
 .equ	UDRE0,0x05					;Defines UDRE0 in AVR Memory - a flag to see if the buffer is empty to see if it is ready to recieve new data
